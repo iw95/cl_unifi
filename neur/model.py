@@ -8,14 +8,16 @@ import numpy as np
 # give prediction
 # train
 
-def plot_training_loss(losses):
+
+def plot_training_loss(losses, ylabel=''):
     plt.figure()
     plt.plot(np.arange(losses.shape[0]), losses.detach().numpy(), 'k')
     plt.title('Learning curve')
-    plt.ylabel('Cross-entropy loss')
+    plt.ylabel(ylabel)
     plt.xlabel('Epoch')
     plt.show()
-    plt.savefig('logs/learn_curve.png')
+    t = '_mse' if ylabel[0] in 'mM' else '_cel'
+    plt.savefig(f'logs/learn_curve{t}.png')
     plt.close()
 
 
@@ -59,9 +61,10 @@ class Model(torch.nn.Module):
         # final layer with softmax activation function
         self.layers.append(Final(torch.nn.Softmax(dim=1)))
         # optimizer SGD using pytorch
-        self.optimizer = torch.optim.SGD(self.parameters(), lr=self.lr, momentum=0.9)
+        self.optimizer = torch.optim.SGD(self.get_parameters(), lr=self.lr)
 
     def train_net(self, epochs=100):
+        mse_per_epoch = torch.zeros(epochs)
         loss_per_epoch = torch.zeros(epochs)
         for epoch in range(epochs):
             # TODO create batches
@@ -77,27 +80,43 @@ class Model(torch.nn.Module):
             loss_b.backward()
             # optimize - do gradient descent
             self.optimizer.step()
+            # self.optimize()
             loss_per_epoch[epoch] = loss_b
+            mse_per_epoch[epoch] = self.mse(prediction, labels)
             print(f'Epoch {epoch}: loss {loss_b}')
-        plot_training_loss(loss_per_epoch)
+        plot_training_loss(loss_per_epoch, ylabel='Cross-entropy loss')
+        plot_training_loss(mse_per_epoch, ylabel='means squared error')
         pass
 
     def forward(self, batch):
         data = batch
         for lay in self.layers:
-            data = lay.forward(data)  # TODO possible to do full batch at once?
+            data = lay.forward(data)
         return data
 
     def loss(self, prediction, labels):
         # cross entropy loss: L = log p_model(y | x)
-        #idx = torch.outer(torch.arange(0, self.output_size), torch.ones(labels.shape[0])) == labels
-        #prob = torch.max(prediction[idx], dim=1)
         assert prediction.shape == labels.shape
         prob = prediction[labels.to(torch.bool)]
         return torch.mean(-1 * torch.log(prob))  # scalar value
 
-    def parameters(self):
+    def mse(self, prediction, labels):
+        assert prediction.shape == labels.shape
+        pred_class = torch.argmax(prediction,dim=1)
+        corr_class = torch.argmax(labels, dim=1)
+        diff = (pred_class - corr_class).to(torch.bool)
+        return torch.mean(diff.to(torch.float))
+
+    def get_parameters(self):
         params = []
         for lay in self.layers:
             params += lay.parameters()
-        return torch.nn.ParameterList(params)
+        return params  #torch.nn.ParameterList(params)
+
+    def optimize(self):
+        params = self.get_parameters()
+        for p in params:
+            update = p.grad.data * self.lr
+            p.data.sub_(update)
+            print(torch.max(update))
+

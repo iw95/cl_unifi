@@ -17,11 +17,12 @@ def main():
     print('Build successful!')
 
     print('Training model...')
-    model.train_net(epochs=5)
+    model.train_net(epochs=100)
     print('Training successful! Wow!')
 
 
 def gen_data(samples=50, classes=4):
+    torch.manual_seed(0)
     x_underly = torch.arange(0, 8 * torch.pi, 0.25 * torch.pi)
     period = torch.rand(samples) * 2 * torch.pi
     label = torch.zeros(samples, classes)
