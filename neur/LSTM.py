@@ -4,6 +4,7 @@ import torch
 
 class LSTM:
     def __init__(self, dim, h, learning_rate=0.01):
+        torch.random.seed(12345)
         self.d = dim
         self.h = h
         self.lr = learning_rate
@@ -49,9 +50,9 @@ class LSTM:
         h = self.forward(x)
         return h[-1]
 
-    def backward(self): # TODO understand autograd
-        gradient = torch.autograd()
-        return gradient
+    #def backward(self): # TODO understand autograd
+    #    gradient = torch.autograd()
+    #    return gradient
 
     def grad_descend(self, gradient): # TODO understand autograd
         self.Wf += self.lr * gradient['Wf']
