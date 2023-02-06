@@ -50,9 +50,10 @@ class LSTM:
         h = self.forward(x)
         return h[-1]
 
-    #def backward(self): # TODO understand autograd
-    #    gradient = torch.autograd()
-    #    return gradient
+    def gradient_descend(self):  # TODO understand autograd
+        self.Wf -= self.lr * self.Wf.grad
 
-    def grad_descend(self, gradient): # TODO understand autograd
-        self.Wf += self.lr * gradient['Wf']
+        pass
+
+    def parameters(self):
+        params = [self.Wi, self.Ui, self.bi, self.Wf, self.Uf, self.bf, self.Wc, self.Uc, self.bc, self.Wo, self.Uo, self.bo]

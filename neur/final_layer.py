@@ -8,3 +8,6 @@ class Final:
 
     def forward(self, x):
         return self.activation(x)
+
+    def parameters(self):
+        return []

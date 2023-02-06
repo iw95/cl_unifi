@@ -9,5 +9,8 @@ class Dense:
     def forward(self, x):
         return x @ self.W
 
-    def backward(self):  # TODO understand autograd
-        torch.autograd()
+    def gradient_descent(self):
+        pass
+
+    def parameters(self):
+        return [self.W]

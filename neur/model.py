@@ -9,16 +9,18 @@ import torch
 
 # class creates a model with <lstm> LSTM layers and one dense layer to classify sequences
 class Model:
-    def __init__(self, data, labels, lstm=1,):
+    def __init__(self, data, labels, lstm=1, lr=0.01):
         self.layers = []
+        self.optimizer = None
         self.lstm = lstm
+        self.lr = lr  # learning rate
         # in case of different size per sequence: data must be padded with 0s in end
-        self.train_data = torch.tensor(data[0]) # shape batch_num, batch_size, time_steps, feat_size
-        self.valid_data = torch.tensor(data[1]) # shape valid_set_size, time_steps, feat_size
-        self.test_data = torch.tensor(data[2]) # shape test_set_size, time_steps, feat_size
-        self.train_lab = torch.tensor(labels[0]) # shape batch_num, batch_size, class_number
-        self.valid_lab = torch.tensor(labels[1]) # shape valid_set_size, class_number
-        self.test_lab = torch.tensor(labels[2]) # shape test_set_size, class_number
+        self.train_data = torch.tensor(data[0])  # shape batch_num, batch_size, time_steps, feat_size
+        self.valid_data = torch.tensor(data[1])  # shape valid_set_size, time_steps, feat_size
+        self.test_data = torch.tensor(data[2])  # shape test_set_size, time_steps, feat_size
+        self.train_lab = torch.tensor(labels[0])  # shape batch_num, batch_size, class_number
+        self.valid_lab = torch.tensor(labels[1])  # shape valid_set_size, class_number
+        self.test_lab = torch.tensor(labels[2])  # shape test_set_size, class_number
         self.feat_size = data[0].shape[3]
         self.output_size = labels[0].shape[2]
         # check sizes
@@ -44,6 +46,8 @@ class Model:
         self.layers.append(Dense(hidden, self.output_size))
         # final layer with softmax activation function
         self.layers.append(Final(torch.nn.Softmax))
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=self.lr, momentum=0.9)
+        torch.optim.SGD() # TODO
 
     def train(self, epochs):
         for e in range(epochs):
@@ -52,24 +56,33 @@ class Model:
             labels = self.train_lab
             # TODO manage input dimensions
 
-            pred = self.forward(batch)
-            loss_b = self.loss(pred, labels)
-            # TODO start backward pass
+            prediction = self.forward(batch)
+            loss_b = self.loss(prediction, labels)
+            # backward pass using pytorch's autograd
+
             loss_b.backward()
-            # TODO do gradient descent
+            # do gradient descent
+            self.gradient_descent()
         pass
 
     def forward(self, batch):
         proc = batch
         for lay in self.layers:
-            proc = lay.forward(proc) # TODO possible to do full batch at once or iterative?
+            proc = lay.forward(proc)  # TODO possible to do full batch at once or iterative?
         return proc
 
     def loss(self, prediction, labels):
         # cross entropy loss: L = log p_model(y | x)
-        idx = torch.outer(torch.arange(0,self.output_size), torch.ones(labels.shape[0])) == labels
+        idx = torch.outer(torch.arange(0, self.output_size), torch.ones(labels.shape[0])) == labels
         prob = torch.max(prediction[idx], dim=1)
         return torch.log(prob)
 
+    def gradient_descent(self):
+        for lay in self.layers:
+            lay.gradient_descent()
 
-
+    def parameters(self):
+        params = []
+        for lay in self.layers:
+            params += lay.parameters()
+        return torch.nn.ParameterList(params)
