@@ -5,20 +5,8 @@ from model import Model
 def main():
     x, label = gen_data(samples=50, classes=4)
 
-    print(x.shape)
-    print(label.shape)
-
-    print('Initialising...')
     model = Model(data=(x[:40], x[40:45], x[45:50]), labels=(label[:40], label[40:45], label[45:50]))
-    print('Initialisation successful!')
-
-    print('Building model...')
-    model.build(8)
-    print('Build successful!')
-
-    print('Training model...')
-    model.train_net(epochs=100)
-    print('Training successful! Wow!')
+    model.model_validation()
 
 
 def gen_data(samples=50, classes=4):
@@ -35,6 +23,25 @@ def gen_data(samples=50, classes=4):
     x[:, :, 1] = x_ * 2
 
     return x, label
+
+
+def test_training():
+    x, label = gen_data(samples=50, classes=4)
+
+    print(x.shape)
+    print(label.shape)
+
+    print('Initialising...')
+    model = Model(data=(x[:40], x[40:45], x[45:50]), labels=(label[:40], label[40:45], label[45:50]))
+    print('Initialisation successful!')
+
+    print('Building model...')
+    model.build(8)
+    print('Build successful!')
+
+    print('Training model...')
+    model.train_net(epochs=100)
+    print('Training successful! Wow!')
 
 
 if __name__ == '__main__':
