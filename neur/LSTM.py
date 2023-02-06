@@ -4,7 +4,7 @@ import torch
 
 class LSTM:
     def __init__(self, dim, h, learning_rate=0.01):
-        torch.random.seed(12345)
+        torch.manual_seed(12345)
         self.d = dim
         self.h = h
         self.lr = learning_rate
@@ -29,31 +29,42 @@ class LSTM:
         pass
 
     def forward(self, x):
+        # x of shape (time_steps, batch_size, feat_size)
         # start with h and c as 0
-        h = torch.zeros((x.shape[0], self.h))
-        c = torch.zeros(self.d)
+        h = torch.zeros((x.shape[1], self.h))
+        c = torch.zeros(x.shape[1], self.h)
         # compute forward pass through lstm cells
         for t, xt in enumerate(x):
-            h[t], c = self.forward_cell(xt, h[t-1 % h.shape[0]], c) # save hidden state vectors and use 0 as first
+            # xt of size (batch_size, feat_size)
+            old_idx = t-1 % h.shape[0]
+            h, c = self.forward_cell(xt, h, c)  # do not save hidden state vectors todo or do save them?
         return h
 
     def forward_cell(self, x, h, c):
-        f = torch.nn.Sigmoid(self.Wf @ x + self.Uf @ h + self.bf)  # forget gate's activation vector
-        i = torch.nn.Sigmoid(self.Wi @ x + self.Ui @ h + self.bi)  # input gate's activation vector
-        o = torch.nn.Sigmoid(self.Wo @ x + self.Uo @ h + self.bo)  # output gate's activation vector
-        s = torch.nn.Tanh(self.Wc @ x + self.Uc @ h + self.bc)  # cell input activation vector
-        c_new = f * c + i * s  # TODO check dimensions
-        h_new = o * torch.nn.Tanh(c_new)
-        return h_new, c_new
+        sig = torch.nn.Sigmoid()
+        tanh = torch.nn.Tanh()
+        # x of shape (batch_size, feat_size, 1), h & c & b of shape (hidden_size)
+        # W of shape (hidden_size, feat_size), U of shape (hidden_size, hidden_size)
+        # Expand and reduce dimensions to compute outputs for full batch at once
+        x_ = x[:,:,None]
+        h_ = h[:,:,None]
+        prod_f = (self.Wf @ x_ + self.Uf @ h_)[:,:,0]
+        prod_i = (self.Wi @ x_ + self.Ui @ h_)[:,:,0]
+        prod_o = (self.Wo @ x_ + self.Uo @ h_)[:,:,0]
+        prod_c = (self.Wc @ x_ + self.Uc @ h_)[:,:,0]
+        f = sig(prod_f + self.bf)  # forget gate's activation vector
+        i = sig(prod_i + self.bi)  # input gate's activation vector
+        o = sig(prod_o + self.bo)  # output gate's activation vector
+        s = tanh(prod_c + self.bc)  # cell input activation vector
+        c_new = f * c + i * s
+        h_new = o * tanh(c_new)
+        return h_new, c_new  # of shape (batch_size, hidden_size)
 
     def predict(self, x):  # return final hidden vector to further use TODO necessary?
         h = self.forward(x)
         return h[-1]
 
-    def gradient_descend(self):  # TODO understand autograd
-        self.Wf -= self.lr * self.Wf.grad
-
-        pass
-
     def parameters(self):
         params = [self.Wi, self.Ui, self.bi, self.Wf, self.Uf, self.bf, self.Wc, self.Uc, self.bc, self.Wo, self.Uo, self.bo]
+        return params
+
