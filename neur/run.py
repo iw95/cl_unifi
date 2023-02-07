@@ -1,11 +1,15 @@
 import torch
 from model import Model
+from load_data import load_data
+from preprocess import train_test_split
 
 
 def main():
-    x, label = gen_data(samples=50, classes=4)
-
-    model = Model(data=(x[:40], x[40:45], x[45:50]), labels=(label[:40], label[40:45], label[45:50]))
+    # running now on real data!
+    X, y = load_data()
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train, test_size=0.2)
+    model = Model(data=(X_train, X_validate, X_test), labels=(y_train, y_validate, y_test))
     model.model_validation()
 
 
@@ -42,6 +46,14 @@ def test_training():
     print('Training model...')
     model.train_net(epochs=100)
     print('Training successful! Wow!')
+
+
+def validate_dummy():
+    x, label = gen_data(samples=50, classes=4)
+
+    model = Model(data=(x[:40], x[40:45], x[45:50]), labels=(label[:40], label[40:45], label[45:50]))
+    model.model_validation()
+    model.save_model()
 
 
 if __name__ == '__main__':

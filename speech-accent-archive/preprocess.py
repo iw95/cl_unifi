@@ -34,7 +34,7 @@ def preprocess():
 # change wave data to mel-stft
 def calculate_melsp(x, sr, n_fft=512):
     # n_fft=512 suitable window size for speech data according to librosa
-    S = librosa.feature.melspectrogram(y=x, sr=sr, n_fft=n_fft)
+    S = librosa.feature.melspectrogram(y=x, sr=sr, n_fft=n_fft, n_mels=128)
     S_log = librosa.power_to_db(S, ref=np.max)
     return S_log
 
@@ -54,7 +54,7 @@ def plot_audio(file):
 
 def save_spectrograms(files):
     fs = DagsHubFilesystem()
-    with open('../data/specs.npy', 'wb') as data_file, open('../data/specs2.npy', 'rb') as saved_data:
+    with open('../data/specs.npy', 'wb') as data_file:
         for filename in tqdm(files):
             f = 'recordings/' + filename + '.mp3'
             if not os.path.exists(f):

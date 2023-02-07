@@ -1,57 +1,67 @@
-import librosa
-import librosa.display
-import csv
 import numpy as np
-import matplotlib.pyplot as plt
+import torch
 
 
-def preprocess():
-    with open('speech-accent-archive/speakers_use.csv') as classes:
-        data = list(csv.reader(classes))
-        data = np.array(data)
-        header = data[0]
-        data = data[1:]
-    # TODO
-    # create mel spectrogram out of all audiofiles
-    # save spectrograms
+def train_test_split(X, y, test_size=0.25, random_state=150):
+    """
+    Splits data into train and test sets while maintaining the class distribution
+    :param X: data tensor
+    :param y: labels tensor
+    :param test_size: between 0 and 1, size of test set in relation to complete set
+    :param random_state: seed
+    :return: Training and test data and labels
+    """
+    # calculate class distribution
+    dist = torch.sum(y, dim=0)
+    y_flat = torch.argmax(y, dim=1)
+    train_idx, test_idx = compute_indices_dist(class_num=dist.shape[0], dist=dist, test_size=test_size,
+                                               y_flat=y_flat, random_state=random_state)
+    return X[train_idx], X[test_idx], y[train_idx], y[test_idx]  # X_train, X_test, y_train, y_test
 
 
-# change wave data to mel-stft
-def calculate_melsp(x, n_fft=512, hop_length=64):
-    stft = np.abs(librosa.stft(x, n_fft=n_fft, hop_length=hop_length)) ** 2
-    log_stft = librosa.power_to_db(stft)
-    melsp = librosa.feature.melspectrogram(S=log_stft, n_mels=32)
-    return melsp
-    # M = librosa.feature.melspectrogram(y=y, sr=sr)
-    # M_db = librosa.power_to_db(M, ref=np.max)
+def compute_indices_dist(class_num, dist, test_size, y_flat, random_state):
+    """
+    Randomly generating indexes for training set and test set in complete data set using numpy.
+    Maintaining same distribution of classes.
+    :param class_num: number of classes
+    :param dist: tensor with number of samples per class
+    :param test_size: between 0 and 1, size of test set in relation to complete set
+    :param y_flat: 1-dimensional vector indicating class of each sample with integers
+    :param random_state: seed
+    :return: Training set indices, test set indices
+    """
+    assert 0 < test_size < 1
+    y_flat = y_flat.numpy()
+    np.random.seed(random_state)
+    # initializing test set and training set
+    test_set_size = int(torch.sum(torch.floor(dist * test_size)))
+    test_idx = np.zeros(test_set_size, dtype=np.int64)
+    train_idx = np.zeros(y_flat.shape[0] - test_set_size, dtype=np.int64)
+    running_test_idx = 0
+    running_train_idx = 0
 
-
-# plot waveform
-def wav_plot(file, ax):
-    y, sr = librosa.load(file)
-    return librosa.display.waveshow(y, ax=ax)
-
-
-# plot mel-spectrogram
-def mel_spectrogram_plot(file, ax):
-    y, sr = librosa.load(file)
-    S = librosa.feature.melspectrogram(y, sr)
-    librosa.display.specshow(librosa.power_to_db(S, ref=np.max), x_axis='time', y_axis='mel', ax=ax)
-
-
-def split():
-    # TODO
-    # balance data?
-    # split data
-    # create batches TODO understand batches -> minibatch?
-    # save splits
-    pass
+    for c in range(class_num):
+        if dist[c] == 0:
+            continue
+        c_test_size = int(test_size*dist[c])  # number of samples for test set out of class c
+        c_train_size = int(dist[c]-c_test_size)
+        # print(f'class {c}: test {c_test_size}, train {c_train_size}')
+        samples_idx = (y_flat == c).nonzero()[0]  # indexes of class c (nested in one more dimension)
+        # shuffling and using the first test_size*class_size samples for test set
+        np.random.shuffle(samples_idx)
+        # assigning test and training indices
+        test_idx[running_test_idx:running_test_idx+c_test_size] = samples_idx[:c_test_size]
+        train_idx[running_train_idx:running_train_idx+c_train_size] = samples_idx[c_test_size:]
+        # increase running indices
+        running_test_idx += c_test_size
+        running_train_idx += c_train_size
+    np.random.shuffle(test_idx)
+    np.random.shuffle(train_idx)
+    return torch.from_numpy(train_idx), torch.from_numpy(test_idx)
 
 
 def main():
-    fig, axs = plt.subplots(2)
-    wav_plot('../speech-accent-archive/recordings/amharic1.mp3', ax=axs[0])
-    mel_spectrogram_plot('../speech-accent-archive/recordings/amharic1.mp3', ax=axs[1])
+    pass
 
 
 if __name__ == '__main__':

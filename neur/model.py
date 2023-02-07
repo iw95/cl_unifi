@@ -5,9 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
-# use layers lstm, dense, softmax
-# give prediction
-# train
+from tqdm import tqdm
 
 
 def plot_training_loss(losses, ylabel='', plt_title='', folder='.'):
@@ -82,26 +80,32 @@ class Model(torch.nn.Module):
         # optimizer SGD using pytorch
         self.optimizer = torch.optim.SGD(self.get_parameters(), lr=self.lr)
 
-    def train_net(self, epochs=100, plt_title='', validate=False):
+    def train_net(self, epochs=10, plt_title='', validate=False, batches=4, shuffle=False):
+        np.random.seed(500)
         mse_per_epoch = torch.zeros(epochs)
         loss_per_epoch = torch.zeros(epochs)
         validation_error = torch.zeros(epochs) if validate else None
-        for epoch in range(epochs):
-            # TODO create batches
-            # right now: full batch training
-            batch = self.train_data
-            labels = self.train_lab  # shape: batch_size, feat_length
+        for epoch in tqdm(range(epochs)):
+            # train in batches
+            batch_size = int(self.train_data.shape[0] / batches)
+            batch_loss = 0
+            batch_loss_mse = 0
+            for b in range(batches):
+                batch = self.train_data[b*batch_size:(b+1)*batch_size]  # shape: batch_size, time_steps, feat_length
+                labels = self.train_lab[b*batch_size:(b+1)*batch_size]  # shape: batch_size, class_n
 
-            # forward pass
-            prediction = self.forward(batch)
-            loss_b = loss(prediction, labels)
-            # backward pass using pytorch's autograd
-            self.zero_grad()
-            loss_b.backward()
-            # optimize - do gradient descent
-            self.optimizer.step()
-            loss_per_epoch[epoch] = loss_b
-            mse_per_epoch[epoch] = mse(prediction, labels)
+                # forward pass
+                prediction = self.forward(batch)
+                loss_b = loss(prediction, labels)
+                # backward pass using pytorch's autograd
+                self.zero_grad()
+                loss_b.backward()
+                # optimize - do gradient descent
+                self.optimizer.step()
+                batch_loss += loss_b
+                batch_loss_mse += mse(prediction, labels)
+            loss_per_epoch[epoch] = batch_loss/batches
+            mse_per_epoch[epoch] = batch_loss_mse/batches
 
             if validate:
                 validation_error[epoch] = loss(self.forward(self.valid_data), self.valid_lab)
@@ -132,7 +136,7 @@ class Model(torch.nn.Module):
         print(f'Minimum loss per parameter setting:')
         for i, mins in enumerate(min_loss):
             print(f'Size {self.size_hidden[i]}: minimum loss {mins[0]} in epoch {mins[1]}')
-        print(f'Minimum {torch.min(min_loss[:,0])} for size {self.size_hidden[torch.argmin(min_loss[:,0])]}')
+        print(f'Minimum {torch.min(min_loss[:,0])} for size {self.size_hidden[int(torch.argmin(min_loss[:,0]))]}')
 
     def forward(self, batch):
         data = batch.permute(1, 0, 2)  # new shape: time_steps, batch_size, feat_length
@@ -145,3 +149,9 @@ class Model(torch.nn.Module):
         for lay in self.layers:
             params += lay.parameters()
         return params
+
+    def old_model(self):
+        self.load_state_dict(torch.load('logs/model_params'))
+
+    def save_model(self):
+        torch.save(self.state_dict(), 'logs/model_params')
