@@ -5,12 +5,7 @@ from preprocess import train_test_split
 
 
 def main():
-    # running now on real data!
-    X, y = load_data()
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train, test_size=0.2)
-    model = Model(data=(X_train, X_validate, X_test), labels=(y_train, y_validate, y_test))
-    model.model_validation()
+    validate_dummy()
 
 
 def gen_data(samples=50, classes=4):
