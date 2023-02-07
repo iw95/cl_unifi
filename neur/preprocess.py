@@ -1,6 +1,9 @@
 import librosa
+import librosa.display
 import csv
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 def preprocess():
     with open('speech-accent-archive/speakers_use.csv') as classes:
@@ -13,36 +16,27 @@ def preprocess():
     # save spectrograms
 
 
-def load_wave_data(audio_dir, file_name):
-    file_path = audio_dir + '/' + file_name
-    x, fs = librosa.load(file_path, sr=44100)
-    return x, fs
-
-
 # change wave data to mel-stft
-def calculate_melsp(x, n_fft=1024, hop_length=128):
+def calculate_melsp(x, n_fft=512, hop_length=64):
     stft = np.abs(librosa.stft(x, n_fft=n_fft, hop_length=hop_length)) ** 2
     log_stft = librosa.power_to_db(stft)
-    melsp = librosa.feature.melspectrogram(S=log_stft, n_mels=128)
+    melsp = librosa.feature.melspectrogram(S=log_stft, n_mels=32)
     return melsp
-
-
-# listen to Example
-def listen_example(file):
-    return display.Audio(file)
+    # M = librosa.feature.melspectrogram(y=y, sr=sr)
+    # M_db = librosa.power_to_db(M, ref=np.max)
 
 
 # plot waveform
 def wav_plot(file, ax):
     y, sr = librosa.load(file)
-    return librosa.display.waveplot(y, ax=ax)
+    return librosa.display.waveshow(y, ax=ax)
 
 
 # plot mel-spectrogram
 def mel_spectrogram_plot(file, ax):
     y, sr = librosa.load(file)
     S = librosa.feature.melspectrogram(y, sr)
-    librosa.display.specshow(librosa.power_to_db(S, ref=np.max), ax=ax)
+    librosa.display.specshow(librosa.power_to_db(S, ref=np.max), x_axis='time', y_axis='mel', ax=ax)
 
 
 def split():
@@ -52,3 +46,13 @@ def split():
     # create batches TODO understand batches -> minibatch?
     # save splits
     pass
+
+
+def main():
+    fig, axs = plt.subplots(2)
+    wav_plot('../speech-accent-archive/recordings/amharic1.mp3', ax=axs[0])
+    mel_spectrogram_plot('../speech-accent-archive/recordings/amharic1.mp3', ax=axs[1])
+
+
+if __name__ == '__main__':
+    main()
