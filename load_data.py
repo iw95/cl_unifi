@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from tqdm import tqdm
+import os
 
 
 def load_data(samples=600, time=3666, feat_s=128, class_num=9, X_path='data/specs.npy', y_path='data/labels.npy'):
@@ -16,8 +17,6 @@ def load_data(samples=600, time=3666, feat_s=128, class_num=9, X_path='data/spec
     :param y_path: path to .npy file containing labels
     :return: Data and labels as tensors
     """
-
-    print(f'{samples} samples, {time} time steps, {feat_s} features, {class_num} classes')
     X = torch.zeros(samples, time, feat_s)
     y = torch.zeros(samples,class_num)
     with open(y_path, 'rb') as y_data:

@@ -8,14 +8,28 @@
 * dagshub
 * librosa
 
-Preprocess data
+Full workflow, i.e. preprocess and load data, train, validate and assess model:
+```
+python run.py full_workflow
+```
+
+Only preprocess data:
+(In first run set setup_dagshub=True in setup_data())
 ```
 python setup_data.py
 ```
 
-Load data, train, validate and assess model:
+Only perform network workflow, i.e. train, validate and assess model
 ```
-python run.py
+python run.py main
 ```
 
-Code has to be run in directory 'cl_unifi/' - otherwise file paths are broken!
+Only train model:
+After building and performing model validation
+```
+model.Model.train_model()
+```
+
+Only 
+
+Code has to be run in directory ```cl_unifi/``` - otherwise file paths are broken!

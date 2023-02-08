@@ -8,10 +8,11 @@ from tqdm import tqdm
 from dagshub.streaming import DagsHubFilesystem
 
 
-def prepro():
+def prepro(max_len):
     """Preprocess audio data
     Save for each sample to use numpy array of mel-spectrogram.
     Save all labels in numpy array.
+    :param max_len: number of time steps per file to save at most to save memory
     """
     print('preprocessing...')
     with open('../data/speakers_use.csv') as samples:
@@ -29,7 +30,7 @@ def prepro():
         # preprocessing and saving audio data
         #   create mel spectrogram out of all audiofiles
         #   save spectrograms
-        save_spectrograms(filenames)
+        save_spectrograms(filenames, max_len=max_len)
         print('saved audio data as spectrograms')
         return
 
@@ -50,13 +51,16 @@ def calculate_melsp(x, sr, n_fft=512):
     return S_log
 
 
-def save_spectrograms(files):
+def save_spectrograms(files, max_len):
     """
     Calculate mel-spectrogram using librosa for each sample and save as ndarray in 'data/specs.npy'
     :param files: Array of file names to save
+    :param max_len: number of time steps per file to save at most to save memory
     """
     # Using dagshub file system if not all audio samples are physically present yet
     fs = DagsHubFilesystem()
+
+    # analyse sequence length
     with open('../data/specs.npy', 'wb') as data_file:
         for filename in tqdm(files):
             f = 'recordings/' + filename + '.mp3'
@@ -68,6 +72,8 @@ def save_spectrograms(files):
             y, sr = librosa.load(f)
             # Calculate spectrogram as better representation of audio
             seq = calculate_melsp(y, sr=sr)
+            # cutting sequence at max_len if necessary
+            seq = seq[:,:min(max_len, seq.shape[1])]
             # Save
             np.save(data_file, seq)
     return
@@ -106,10 +112,12 @@ def plot_audio(file):
     return
 
 
-def preprocess():
+def preprocess(max_len=1396):
     """
     Calling preprocessing of audio data operating in subfolder 'speech-accent-archive' to download files if necessary
+    :param max_len: define max length of a sequence
     """
     os.chdir('speech-accent-archive/')
-    prepro()
+    # using 0.7 quantile of length
+    prepro(max_len=max_len)
     os.chdir('../')

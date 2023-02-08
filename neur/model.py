@@ -110,26 +110,30 @@ class Model(torch.nn.Module):
         self.hyp_set = False
         self.trained = False
 
-    def build(self, hidden=None):
+    def build(self, hidden=None, use_saved=False):
         """
         Building model with 3 layers: LSTM, Dense and Final
         :param hidden: Size of hidden state in LSTM layer
+        :param use_saved: Use parameters from previously trained model
         """
-        if hidden is None:
-            hidden = self.final_hidden
+        if use_saved: # todo to be tested
+            self.old_model()
+        else:
+            if hidden is None:
+                hidden = self.final_hidden
 
-        # lstm layers
-        self.layers = []
-        for i in range(self.lstm):
-            self.layers.append(LSTM(self.feat_size, hidden))
-        # dense layer
-        self.layers.append(Dense(hidden, self.output_size))
-        # final layer with softmax activation function
-        self.layers.append(Final(torch.nn.Softmax(dim=1)))
-        # optimizer SGD using pytorch
-        self.optimizer = torch.optim.SGD(self.get_parameters(), lr=self.lr)
+            # lstm layers
+            self.layers = []
+            for i in range(self.lstm):
+                self.layers.append(LSTM(self.feat_size, hidden))
+            # dense layer
+            self.layers.append(Dense(hidden, self.output_size))
+            # final layer with softmax activation function
+            self.layers.append(Final(torch.nn.Softmax(dim=1)))
+            # optimizer SGD using pytorch
+            self.optimizer = torch.optim.SGD(self.get_parameters(), lr=self.lr)
 
-    def train_net(self, epochs=None, plt_title='', validate=False, batches=4, shuffle=True):
+    def train_net(self, epochs=None, plt_title='', validate=False, batches=50, shuffle=True):
         """Training model with <epoch> epochs and <batches> batches which are split randomly if <shuffle>==True.
         Model computes validation error on the go if <validate>==True.
         Uses either only test set or test and validation set for training depending on <validate>.
