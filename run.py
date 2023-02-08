@@ -74,7 +74,7 @@ def assess_model(model, training_loss):
     return test_error
 
 
-def full_workfow():
+def full_workflow():
     """
     Running full learning workflow
     Preprocessing and validating, training and assessing model
