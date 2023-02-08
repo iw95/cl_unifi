@@ -4,7 +4,7 @@ from tqdm import tqdm
 import os
 
 
-def load_data(samples=600, time=3666, feat_s=128, class_num=9, X_path='data/specs.npy', y_path='data/labels.npy'):
+def load_data(samples=452, time=3666, feat_s=128, class_num=9, X_path='data/specs.npy', y_path='data/labels.npy'):
     """Load data from numpy files
 
     Requires dimensions to initialize tensors.

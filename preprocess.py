@@ -23,7 +23,6 @@ def prepro(max_len):
         l_idx = header.index('native_language')
         labels = data[1:,l_idx]
         array_from_labels(labels)
-        print('saved labels')
         # Finding file names
         f_idx = header.index('filename')
         filenames = list(data[1:, f_idx])
@@ -31,7 +30,6 @@ def prepro(max_len):
         #   create mel spectrogram out of all audiofiles
         #   save spectrograms
         save_spectrograms(filenames, max_len=max_len)
-        print('saved audio data as spectrograms')
         return
 
 

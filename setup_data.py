@@ -6,11 +6,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def set_up_data(setup_dagshub=False):
+def set_up_data(setup_dagshub=False, min_samples=60):
     """
     Filtering and preprocessing data.
     Set setup_dagshub=True in first run as dagshub hooks have to be installed.
     :param setup_dagshub: Set True in first run
+    :param min_samples: Minimum amount of samples per class
+    :return: number of samples
     """
     if setup_dagshub:
         # install dagshub hooks to be able to access data from repo
@@ -20,9 +22,10 @@ def set_up_data(setup_dagshub=False):
 
     # Filter data to use for training based on class sizes
     # creates speech-accent-archive/speakers_use.csv and speech-accent-archive/overview.csv
-    filter_data(min_samples=60)
+    n_samples = filter_data(min_samples=min_samples)
     # preprocess chosen audio files from wave form to spectrogram, save as .npy
     preprocess(max_len=1396)
+    return n_samples
 
 
 # Details of data:

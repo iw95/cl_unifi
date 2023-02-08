@@ -31,7 +31,7 @@ def plot_loss_hidden(losses, hidden):
     plt.title('Loss model validation')
     plt.ylabel('Cross-entropy loss')
     plt.xlabel('Size hidden parameter')
-    plt.xticks(hidden)
+    plt.xticks(hidden,labels=hidden)
     plt.savefig(f'logs/validation/hidden_loss.png')
     plt.close()
 
@@ -102,7 +102,8 @@ class Model(torch.nn.Module):
         assert data[2].shape[0] == labels[2].shape[0], f'Inconsistent test set size: data {data[2].shape[0]}, labels {labels[2].shape[0]}'
 
         # model validation: sizes to try:
-        self.size_hidden = [4, 8, 16]
+        # if using many classes use bigger hidden vector options!
+        self.size_hidden = [4, 8, 12]
 
         # Parameters will be set after model validation
         self.final_epochs = 0
@@ -116,24 +117,21 @@ class Model(torch.nn.Module):
         :param hidden: Size of hidden state in LSTM layer
         :param use_saved: Use parameters from previously trained model
         """
-        if use_saved: # todo to be tested
-            self.old_model()
-        else:
-            if hidden is None:
-                hidden = self.final_hidden
+        if hidden is None:
+            hidden = self.final_hidden
 
-            # lstm layers
-            self.layers = []
-            for i in range(self.lstm):
-                self.layers.append(LSTM(self.feat_size, hidden))
-            # dense layer
-            self.layers.append(Dense(hidden, self.output_size))
-            # final layer with softmax activation function
-            self.layers.append(Final(torch.nn.Softmax(dim=1)))
-            # optimizer SGD using pytorch
-            self.optimizer = torch.optim.SGD(self.get_parameters(), lr=self.lr)
+        # lstm layers
+        self.layers = []
+        for i in range(self.lstm):
+            self.layers.append(LSTM(self.feat_size, hidden))
+        # dense layer
+        self.layers.append(Dense(hidden, self.output_size))
+        # final layer with softmax activation function
+        self.layers.append(Final(torch.nn.Softmax(dim=1)))
+        # optimizer SGD using pytorch
+        self.optimizer = torch.optim.SGD(self.get_parameters(), lr=self.lr)
 
-    def train_net(self, epochs=None, plt_title='', validate=False, batches=50, shuffle=True):
+    def train_net(self, epochs=None, plt_title='', validate=False, batches=1, shuffle=False):
         """Training model with <epoch> epochs and <batches> batches which are split randomly if <shuffle>==True.
         Model computes validation error on the go if <validate>==True.
         Uses either only test set or test and validation set for training depending on <validate>.
@@ -155,6 +153,9 @@ class Model(torch.nn.Module):
         else:
             tr_data = torch.cat((self.train_data, self.valid_data), dim=0)
             tr_lab = torch.cat((self.train_lab, self.valid_lab), dim=0)
+        # making sure batches is not bigger than data set
+        if batches > tr_data.shape[0]:
+            batches = torch.min(tr_data.shape[0])
         # if hyper parameters are fixed, no epoch has to be given
         if epochs is None:
             epochs = self.final_epochs
@@ -279,12 +280,6 @@ class Model(torch.nn.Module):
             params += lay.parameters()
         return params
 
-    def old_model(self):
-        self.load_state_dict(torch.load('logs/model_params'))
-
-    def save_model(self):
-        torch.save(self.state_dict(), 'logs/model_params')
-
     def set_hyper_params(self, hidden, epochs):
         """
         Setting hyper parameters after model validation and building again with new setup.
@@ -315,6 +310,6 @@ class Model(torch.nn.Module):
         """
         if not self.hyp_set:
             raise Exception("Model validation has not yet been performed. Run 'model.model_validation()' first.")
-        tr_loss = self.train_net()
+        tr_loss, val_loss = self.train_net()
         self.trained = True
         return tr_loss[-1]

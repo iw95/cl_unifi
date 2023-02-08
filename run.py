@@ -14,15 +14,16 @@ def print_custom(s='', silent=False):
     print(s)
 
 
-def main(silent=False):
+def main(silent=False, samples=452):
     """ Full set up of network
     Load and splitting data, validate, train and assess and save model.
     :param silent: Whether show progress
+    :param samples: number of samples used
     """
     # Loading data
     # Maximum length = 1396
     print_custom('loading data...', silent)
-    X, y = load_data(time=1396)
+    X, y = load_data(samples=samples, time=1396)
 
     # Split data
     print_custom('splitting data...', silent)
@@ -35,7 +36,7 @@ def main(silent=False):
 
     # Perform model validation over hyper parameters
     print_custom('perform model validation...', silent)
-    model.model_validation(epochs=40)
+    model.model_validation(epochs=80)
 
     # fix hyper parameters:
     print_custom('set hyper parameters...', silent)
@@ -46,6 +47,7 @@ def main(silent=False):
     # train final model
     print_custom('train final model...', silent)
     training_loss = model.train_model()
+    print(training_loss)
 
     # assess model
     print_custom('assess model...', silent)
@@ -79,8 +81,8 @@ def full_workflow():
     Running full learning workflow
     Preprocessing and validating, training and assessing model
     """
-    set_up_data()
-    main()
+    set_up_data(min_samples=60,setup_dagshub=True)
+    main(samples=452)
 
 
 def get_hidden(model):
