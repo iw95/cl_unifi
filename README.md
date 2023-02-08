@@ -26,10 +26,9 @@ python run.py main
 
 Only train model:
 After building and performing model validation
-```
-model.Model.train_model()
-```
+Use function ```model.Model.train_model()```
 
-Only 
+Only assessing model after training:
+ Use function ```run.assess_model(model, training_loss)```
 
 Code has to be run in directory ```cl_unifi/``` - otherwise file paths are broken!
