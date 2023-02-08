@@ -20,7 +20,7 @@ def set_up_data(setup_dagshub=False):
 
     # Filter data to use for training based on class sizes
     # creates speech-accent-archive/speakers_use.csv and speech-accent-archive/overview.csv
-    filter_data()
+    filter_data(min_samples=60)
     # preprocess chosen audio files from wave form to spectrogram, save as .npy
     preprocess(max_len=1396)
 
