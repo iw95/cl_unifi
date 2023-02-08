@@ -3,8 +3,8 @@ import torch
 
 
 def train_test_split(X, y, test_size=0.25, random_state=150):
-    """
-    Splits data into train and test sets while maintaining the class distribution
+    """Splits data into train and test sets while maintaining the class distribution.
+    Uses function 'compute_indices_dist' to compute the indices for each set
     :param X: data tensor
     :param y: labels tensor
     :param test_size: between 0 and 1, size of test set in relation to complete set
@@ -32,6 +32,7 @@ def compute_indices_dist(class_num, dist, test_size, y_flat, random_state):
     """
     assert 0 < test_size < 1
     y_flat = y_flat.numpy()
+    # Set seed
     np.random.seed(random_state)
     # initializing test set and training set
     test_set_size = int(torch.sum(torch.floor(dist * test_size)))
@@ -40,29 +41,24 @@ def compute_indices_dist(class_num, dist, test_size, y_flat, random_state):
     running_test_idx = 0
     running_train_idx = 0
 
+    # Iterating through classes
     for c in range(class_num):
         if dist[c] == 0:
             continue
-        c_test_size = int(test_size*dist[c])  # number of samples for test set out of class c
+        # number of samples for test set and training set out of class c
+        c_test_size = int(test_size*dist[c])
         c_train_size = int(dist[c]-c_test_size)
-        # print(f'class {c}: test {c_test_size}, train {c_train_size}')
+        # Indexes for class c
         samples_idx = (y_flat == c).nonzero()[0]  # indexes of class c (nested in one more dimension)
-        # shuffling and using the first test_size*class_size samples for test set
+        # Shuffling
         np.random.shuffle(samples_idx)
-        # assigning test and training indices
+        # Assigning test and training indices
         test_idx[running_test_idx:running_test_idx+c_test_size] = samples_idx[:c_test_size]
         train_idx[running_train_idx:running_train_idx+c_train_size] = samples_idx[c_test_size:]
-        # increase running indices
+        # Increase running indices
         running_test_idx += c_test_size
         running_train_idx += c_train_size
+    # Final shuffling to not keep the classes in order
     np.random.shuffle(test_idx)
     np.random.shuffle(train_idx)
     return torch.from_numpy(train_idx), torch.from_numpy(test_idx)
-
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()

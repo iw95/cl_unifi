@@ -13,3 +13,9 @@ Preprocess data
 python setup_data.py
 ```
 
+Load data, train, validate and assess model:
+```
+python run.py
+```
+
+Code has to be run in directory 'cl_unifi/' - otherwise file paths are broken!

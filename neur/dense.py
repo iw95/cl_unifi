@@ -2,6 +2,10 @@ import torch
 
 
 class Dense:
+    """
+    Class containing dense feed forward layer.
+    To reach desired output size.
+    """
     def __init__(self, dim_feat, dim_out):
         self.W = torch.eye(dim_feat, dim_out, requires_grad=True)
         # data (sz: batch_size,feature_size) @ W (sz: feature_size,output_size) = output (sz: batch_size,output_size)

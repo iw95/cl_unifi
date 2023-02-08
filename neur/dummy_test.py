@@ -1,7 +1,5 @@
 import torch
 from model import Model
-from load_data import load_data
-from preprocess import train_test_split
 
 
 def main():
@@ -9,6 +7,7 @@ def main():
 
 
 def gen_data(samples=50, classes=4):
+    # Generation dummy data
     torch.manual_seed(0)
     x_underly = torch.arange(0, 8 * torch.pi, 0.25 * torch.pi)
     period = torch.rand(samples) * 2 * torch.pi
@@ -25,6 +24,7 @@ def gen_data(samples=50, classes=4):
 
 
 def test_training():
+    # Running training with dummy data for testing
     x, label = gen_data(samples=50, classes=4)
 
     print(x.shape)
@@ -44,6 +44,7 @@ def test_training():
 
 
 def validate_dummy():
+    # Run model validation with dummy data for testing
     x, label = gen_data(samples=50, classes=4)
 
     model = Model(data=(x[:40], x[40:45], x[45:50]), labels=(label[:40], label[40:45], label[45:50]))
